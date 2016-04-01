@@ -17,6 +17,8 @@ void delay(void);
 void toggleLight(void);
 
 void main() {
+    DDPCONbits.JTAGEN = 0; // make pin 4 available
+    TRISA = 0xFFEF; // clear pin 4
     while(1){
         delay(); // delays by 48000 cycles, or 1/1000 secs, meaning the light will toggle at 1000kHz
         toggleLight();

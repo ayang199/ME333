@@ -1,7 +1,5 @@
-#include <xc.h>
-
 // DEVCFG3
-// USERID = No Setting
+//USERID
 #pragma config PMDL1WAY = ON            // Peripheral Module Disable Configuration (Allow only one reconfiguration)
 #pragma config IOL1WAY = ON             // Peripheral Pin Select Configuration (Allow only one reconfiguration)
 #pragma config FUSBIDIO = ON            // USB USID Selection (Controlled by the USB Module)
@@ -15,16 +13,16 @@
 #pragma config FPLLODIV = DIV_2         // System PLL Output Clock Divider (PLL Divide by 2)
 
 // DEVCFG1
-#pragma config FNOSC = FRCPLL           // Oscillator Selection Bits (Fast RC Osc with PLL)
-#pragma config FSOSCEN = ON             // Secondary Oscillator Enable (Enabled)
-#pragma config IESO = ON                // Internal/External Switch Over (Enabled)
-#pragma config POSCMOD = EC             // Primary Oscillator Configuration (External clock mode)
-#pragma config OSCIOFNC = ON            // CLKO Output Signal Active on the OSCO Pin (Enabled)
-#pragma config FPBDIV = DIV_2           // Peripheral Clock Divisor (Pb_Clk is Sys_Clk/2)
+#pragma config FNOSC = PRIPLL           // Oscillator Selection Bits (Primary Osc w/PLL (XT+,HS+,EC+PLL))
+#pragma config FSOSCEN = OFF            // Secondary Oscillator Enable (Disabled)
+#pragma config IESO = OFF               // Internal/External Switch Over (Disabled)
+#pragma config POSCMOD = HS             // Primary Oscillator Configuration (HS osc mode)
+#pragma config OSCIOFNC = OFF           // CLKO Output Signal Active on the OSCO Pin (Disabled)
+#pragma config FPBDIV = DIV_1           // Peripheral Clock Divisor (Pb_Clk is Sys_Clk/1)
 #pragma config FCKSM = CSDCMD           // Clock Switching and Monitor Selection (Clock Switch Disable, FSCM Disabled)
 #pragma config WDTPS = PS1048576        // Watchdog Timer Postscaler (1:1048576)
 #pragma config WINDIS = OFF             // Watchdog Timer Window Enable (Watchdog Timer is in Non-Window Mode)
-#pragma config FWDTEN = ON              // Watchdog Timer Enable (WDT Enabled)
+#pragma config FWDTEN = OFF             // Watchdog Timer Enable (WDT Disabled (SWDTEN Bit Controls))
 #pragma config FWDTWINSZ = WINSZ_25     // Watchdog Timer Window Size (Window Size is 25%)
 
 // DEVCFG0
@@ -34,26 +32,12 @@
 #pragma config BWP = OFF                // Boot Flash Write Protect bit (Protection Disabled)
 #pragma config CP = OFF                 // Code Protect (Protection Disabled)
 
-#define DELAYTIME 48000
-void delay(void);
-void toggleLight(void);
+#include <xc.h>
 
 void main() {
-    DDPCONbits.JTAGEN = 0; // make pin 4 available
-    TRISA = 0xFFEF; // clear pin 4
+    //TRISA = 0xFFEF; // clear pin 4
+    //LATAbits.LATA4 = 1;
     while(1){
-        delay(); // delays by 48000 cycles, or 1/1000 secs, meaning the light will toggle at 1000kHz
-        toggleLight();
+        ;
     }
-}
-
-void delay(void) {
-  int i;
-  for (i = 0; i < DELAYTIME; i++) {
-      ; //do nothing
-  }
-}
-
-void toggleLight(void) {
-  LATAINV = 0b10000; // invert the LED (which is on port A4)
 }

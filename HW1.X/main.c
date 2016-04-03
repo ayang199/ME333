@@ -1,5 +1,5 @@
 // DEVCFG3
-//USERID
+#pragma config USERID = 1               // Arbitrary UserID
 #pragma config PMDL1WAY = ON            // Peripheral Module Disable Configuration (Allow only one reconfiguration)
 #pragma config IOL1WAY = ON             // Peripheral Pin Select Configuration (Allow only one reconfiguration)
 #pragma config FUSBIDIO = ON            // USB USID Selection (Controlled by the USB Module)
@@ -8,9 +8,9 @@
 // DEVCFG2
 #pragma config FPLLIDIV = DIV_2         // PLL Input Divider (2x Divider)
 #pragma config FPLLMUL = MUL_24         // PLL Multiplier (24x Multiplier)
+#pragma config FPLLODIV = DIV_2         // System PLL Output Clock Divider (PLL Divide by 2)
 #pragma config UPLLIDIV = DIV_2         // USB PLL Input Divider (2x Divider)
 #pragma config UPLLEN = ON              // USB PLL Enable (Enabled)
-#pragma config FPLLODIV = DIV_2         // System PLL Output Clock Divider (PLL Divide by 2)
 
 // DEVCFG1
 #pragma config FNOSC = PRIPLL           // Oscillator Selection Bits (Primary Osc w/PLL (XT+,HS+,EC+PLL))
@@ -33,11 +33,58 @@
 #pragma config CP = OFF                 // Code Protect (Protection Disabled)
 
 #include <xc.h>
+#include <sys/attribs.h>
+unsigned int time;
 
-void main() {
-    //TRISA = 0xFFEF; // clear pin 4
-    //LATAbits.LATA4 = 1;
-    while(1){
-        ;
+int main() {
+
+    __builtin_disable_interrupts();
+
+    // set the CP0 CONFIG register to indicate that kseg0 is cacheable (0x3)
+    __builtin_mtc0(_CP0_CONFIG, _CP0_CONFIG_SELECT, 0xa4210583);
+
+    // 0 data RAM access wait states
+    BMXCONbits.BMXWSDRM = 0x0;
+
+    // enable multi vector interrupts
+    INTCONbits.MVEC = 0x1;
+
+    // disable JTAG to get pins back
+    DDPCONbits.JTAGEN = 0;
+    
+    // do your TRIS and LAT commands here
+    TRISA = 0xFFEF; // set pin 4 as output
+    TRISB = 0xFFFF; // set all pins as inputs
+    LATAbits.LATA4 = 1; // turn LED on
+    
+    __builtin_enable_interrupts();
+    
+    
+   /*
+   _CP0_SET_COUNT(0); // set core timer counter to 0
+    while(1) {
+	    // use _CP0_SET_COUNT(0) and _CP0_GET_COUNT() to test the PIC timing
+		// remember the core timer runs at half the CPU speed
+        time = _CP0_GET_COUNT();
+        if (time == 48000000/2) {
+            LATAINV = 0x0010;    // invert pin 4
+            _CP0_SET_COUNT(0);
+        }
     }
+    */
+    int time = 0;
+    while(1) {
+	    // use _CP0_SET_COUNT(0) and _CP0_GET_COUNT() to test the PIC timing
+		// remember the core timer runs at half the CPU speed
+        time++;
+        if (time == 2400000) {   // 0.5ms = 24000 CPU ticks, .5s = 24000000
+            LATAINV = 0x0010;    // invert pin 4
+            time = 0;
+        }
+        while(!PORTBbits.RB4){
+            ;
+        }
+    }
+    
+    
 }

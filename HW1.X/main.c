@@ -34,10 +34,12 @@
 
 #include <xc.h>
 #include <sys/attribs.h>
+//#include <plib.h>
+
 unsigned int time;
 
 int main() {
-
+    //SYSTEMConfigPerformance(48000000);
     __builtin_disable_interrupts();
 
     // set the CP0 CONFIG register to indicate that kseg0 is cacheable (0x3)
@@ -58,33 +60,18 @@ int main() {
     LATAbits.LATA4 = 1; // turn LED on
     
     __builtin_enable_interrupts();
-    
-    
-   /*
-   _CP0_SET_COUNT(0); // set core timer counter to 0
+   
     while(1) {
 	    // use _CP0_SET_COUNT(0) and _CP0_GET_COUNT() to test the PIC timing
 		// remember the core timer runs at half the CPU speed
-        time = _CP0_GET_COUNT();
-        if (time == 48000000/2) {
-            LATAINV = 0x0010;    // invert pin 4
-            _CP0_SET_COUNT(0);
+        _CP0_SET_COUNT(0); // set core timer counter to 0
+        time = 0;
+        while (time < 12000) { // 0.5ms = 12000 ticks
+            time = _CP0_GET_COUNT();
         }
-    }
-    */
-    int time = 0;
-    while(1) {
-	    // use _CP0_SET_COUNT(0) and _CP0_GET_COUNT() to test the PIC timing
-		// remember the core timer runs at half the CPU speed
-        time++;
-        if (time == 2400000) {   // 0.5ms = 24000 CPU ticks, .5s = 24000000
-            LATAINV = 0x0010;    // invert pin 4
-            time = 0;
-        }
+        LATAINV = 0x0010;    // invert pin 4
         while(!PORTBbits.RB4){
             ;
         }
     }
-    
-    
 }

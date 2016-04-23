@@ -18,7 +18,7 @@
 #pragma config IESO = OFF               // Internal/External Switch Over (Disabled)
 #pragma config POSCMOD = HS             // Primary Oscillator Configuration (HS osc mode)
 #pragma config OSCIOFNC = OFF           // CLKO Output Signal Active on the OSCO Pin (Disabled)
-#pragma config FPBDIV = DIV_1           // Peripheral Clock Divisor (Pb_Clk is Sys_Clk/1)
+#pragma config FPBDIV = DIV_8           // Peripheral Clock Divisor (Pb_Clk is Sys_Clk/1)
 #pragma config FCKSM = CSDCMD           // Clock Switching and Monitor Selection (Clock Switch Disable, FSCM Disabled)
 #pragma config WDTPS = PS1048576        // Watchdog Timer Postscaler (1:1048576)
 #pragma config WINDIS = OFF             // Watchdog Timer Window Enable (Watchdog Timer is in Non-Window Mode)
@@ -34,7 +34,63 @@
 
 #include <xc.h>
 #include <sys/attribs.h>
+#include <math.h>
 
-int main(){
-    ;
+#define CS LATBbits.LATB15 // chip select pin
+
+unsigned int time;
+void delay(int t);
+
+void main(){
+    //SYSTEMConfigPerformance(48000000);
+    __builtin_disable_interrupts();
+
+    // set the CP0 CONFIG register to indicate that kseg0 is cacheable (0x3)
+    __builtin_mtc0(_CP0_CONFIG, _CP0_CONFIG_SELECT, 0xa4210583);
+
+    // 0 data RAM access wait states
+    BMXCONbits.BMXWSDRM = 0x0;
+
+    // enable multi vector interrupts
+    INTCONbits.MVEC = 0x1;
+
+    // disable JTAG to get pins back
+    DDPCONbits.JTAGEN = 0;
+    
+    // do your TRIS and LAT commands here
+    TRISA = 0xFFEF; // set pin 4 as output
+    TRISB = 0b000111111110011; // set inputs/outputs
+    
+    __builtin_enable_interrupts();
+    
+    RPB13Rbits.RPB13R = 0b0011; //SDO
+    CS = 1;
+    
+    // initialize SPI
+    SPI1_init();
+    
+    while(1){
+        
+        // Update VoutA value
+        CS = 0;
+        setVoltage(0,0b01111111);
+        CS = 1;
+        
+        // Update VoutB value
+        CS = 0;
+        setVoltage(1,0b01111111);
+        CS = 1;
+        
+        // Delay for 1 ms
+        delay(24000);
+    }
+    
+}
+
+void delay(int t){
+    _CP0_SET_COUNT(0); // set core timer counter to 0
+        time = 0;
+        while (time < t) { // 0.5ms = 12000 ticks
+            time = _CP0_GET_COUNT();
+        }
 }

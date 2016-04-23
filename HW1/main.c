@@ -34,7 +34,6 @@
 
 #include <xc.h>
 #include <sys/attribs.h>
-//#include <plib.h>
 
 unsigned int time;
 

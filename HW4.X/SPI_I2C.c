@@ -18,7 +18,7 @@
 #pragma config IESO = OFF               // Internal/External Switch Over (Disabled)
 #pragma config POSCMOD = HS             // Primary Oscillator Configuration (HS osc mode)
 #pragma config OSCIOFNC = OFF           // CLKO Output Signal Active on the OSCO Pin (Disabled)
-#pragma config FPBDIV = DIV_8           // Peripheral Clock Divisor (Pb_Clk is Sys_Clk/1)
+#pragma config FPBDIV = DIV_1           // Peripheral Clock Divisor (Pb_Clk is Sys_Clk/1)
 #pragma config FCKSM = CSDCMD           // Clock Switching and Monitor Selection (Clock Switch Disable, FSCM Disabled)
 #pragma config WDTPS = PS1048576        // Watchdog Timer Postscaler (1:1048576)
 #pragma config WINDIS = OFF             // Watchdog Timer Window Enable (Watchdog Timer is in Non-Window Mode)
@@ -37,6 +37,7 @@
 #include <math.h>
 
 #define CS LATBbits.LATB15 // chip select pin
+#define pi 3.14159265
 
 unsigned int time;
 void delay(int t);
@@ -69,16 +70,32 @@ void main(){
     // initialize SPI
     SPI1_init();
     
+    // initialize counters
+    int a = 0;
+    int b = 0;
+    
     while(1){
+        a++;
+        b++;
+        
+        if (a==100) {
+            a=0;
+        }
+        if (b==200){
+            b=0;
+        }
+        
+        unsigned int aVolt = floor(100*sin((a*2*pi)/100)+100);
+        unsigned int bVolt = b;
         
         // Update VoutA value
         CS = 0;
-        setVoltage(0,0b01111111);
+        setVoltage(0,aVolt);
         CS = 1;
         
         // Update VoutB value
         CS = 0;
-        setVoltage(1,0b01111111);
+        setVoltage(1,bVolt);
         CS = 1;
         
         // Delay for 1 ms

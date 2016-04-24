@@ -18,7 +18,7 @@
 #pragma config IESO = OFF               // Internal/External Switch Over (Disabled)
 #pragma config POSCMOD = HS             // Primary Oscillator Configuration (HS osc mode)
 #pragma config OSCIOFNC = OFF           // CLKO Output Signal Active on the OSCO Pin (Disabled)
-#pragma config FPBDIV = DIV_1           // Peripheral Clock Divisor (Pb_Clk is Sys_Clk/1)
+#pragma config FPBDIV = DIV_8           // Peripheral Clock Divisor (Pb_Clk is Sys_Clk/1)
 #pragma config FCKSM = CSDCMD           // Clock Switching and Monitor Selection (Clock Switch Disable, FSCM Disabled)
 #pragma config WDTPS = PS1048576        // Watchdog Timer Postscaler (1:1048576)
 #pragma config WINDIS = OFF             // Watchdog Timer Window Enable (Watchdog Timer is in Non-Window Mode)
@@ -62,6 +62,13 @@ void main(){
     TRISA = 0xFFEF; // set pin 4 as output
     TRISB = 0b000111111110011; // set inputs/outputs
     
+    // turn off analog pins
+    ANSELBbits.ANSB2 = 0;
+    ANSELBbits.ANSB3 = 0;
+    
+    // setup i2c
+    i2c_master_setup();
+    
     __builtin_enable_interrupts();
     
     RPB13Rbits.RPB13R = 0b0011; //SDO
@@ -75,31 +82,61 @@ void main(){
     int b = 0;
     
     while(1){
-        a++;
-        b++;
+//        //************* SPI ***************
+//        
+//        a++;
+//        b++;
+//        
+//        if (a==100) {
+//            a=0;
+//        }
+//        if (b==200){
+//            b=0;
+//        }
+//        
+//        unsigned int aVolt = floor(100*sin((a*2*pi)/100)+100);
+//        unsigned int bVolt = b;
+//        
+//        // Update VoutA value
+//        CS = 0;
+//        setVoltage(0,aVolt);
+//        CS = 1;
+//        
+//        // Update VoutB value
+//        CS = 0;
+//        setVoltage(1,bVolt);
+//        CS = 1;
+//        
+//        // Delay for 1 ms
+//        delay(24000);
         
-        if (a==100) {
-            a=0;
-        }
-        if (b==200){
-            b=0;
-        }
         
-        unsigned int aVolt = floor(100*sin((a*2*pi)/100)+100);
-        unsigned int bVolt = b;
         
-        // Update VoutA value
-        CS = 0;
-        setVoltage(0,aVolt);
-        CS = 1;
+        //************* I2C **************
+        i2c_master_start();             // start i2c
+        i2c_master_send(0b01001110);    // send device address (constant)
+        i2c_master_send(0x05);          // send register IODIR
+        //i2c_master_send(0x00);          // send data (all outputs)
         
-        // Update VoutB value
-        CS = 0;
-        setVoltage(1,bVolt);
-        CS = 1;
+        i2c_master_restart();
+        i2c_master_send(0b01001111);    // send device address (constant)
+        unsigned int data = i2c_master_recv();
+        i2c_master_ack(1);
         
-        // Delay for 1 ms
-        delay(24000);
+        i2c_master_stop();              // STOP
+        
+        CS=0;
+        setVoltage(0,data);
+        CS=1;
+        
+        
+        /*
+        i2c_master_start();             // start i2c
+        i2c_master_send(0b01000000);    // send device address (constant)
+        i2c_master_send(0x09);          // send register GPIO
+        i2c_master_send(0b01001010);    // send data (pins 1, 2, and 6 high)
+        i2c_master_stop();              // STOP
+        */
     }
     
 }

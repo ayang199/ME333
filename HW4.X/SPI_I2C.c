@@ -1,7 +1,7 @@
 // DEVCFG3
 #pragma config USERID = 1               // Arbitrary UserID
-#pragma config PMDL1WAY = ON            // Peripheral Module Disable Configuration (Allow only one reconfiguration)
-#pragma config IOL1WAY = ON             // Peripheral Pin Select Configuration (Allow only one reconfiguration)
+#pragma config PMDL1WAY = OFF           // Peripheral Module Disable Configuration (Allow only one reconfiguration)
+#pragma config IOL1WAY = OFF            // Peripheral Pin Select Configuration (Allow only one reconfiguration)
 #pragma config FUSBIDIO = ON            // USB USID Selection (Controlled by the USB Module)
 #pragma config FVBUSONIO = ON           // USB VBUS ON Selection (Controlled by USB Module)
 
@@ -26,6 +26,7 @@
 #pragma config FWDTWINSZ = WINSZ_25     // Watchdog Timer Window Size (Window Size is 25%)
 
 // DEVCFG0
+#pragma config DEBUG = OFF
 #pragma config JTAGEN = OFF             // JTAG Enable (JTAG Disabled)
 #pragma config ICESEL = ICS_PGx1        // ICE/ICD Comm Channel Select (Communicate on PGEC1/PGED1)
 #pragma config PWP = OFF                // Program Flash Write Protect (Disable)
@@ -38,6 +39,7 @@
 
 #define CS LATBbits.LATB15 // chip select pin
 #define pi 3.14159265
+#define ADDR 0b0100111
 
 unsigned int time;
 void delay(int t);
@@ -109,26 +111,52 @@ void main(){
 //        
 //        // Delay for 1 ms
 //        delay(24000);
-        
+//        
         
         
         //************* I2C **************
+//        i2c_master_start();             // start i2c
+//        i2c_master_send(ADDR<<1|0);       // send device address (write)
+//        i2c_master_send(0x00);          // send register address (IODIR)
+//        i2c_master_send(0b00100101);          // send data (all outputs)
+//        i2c_master_stop();
+//        
+//        i2c_master_start();             // start i2c
+//        i2c_master_send(ADDR<<1|0);       // send device address (write)
+//        i2c_master_send(0x05);          // send register address (IODIR)
+//        i2c_master_restart();
+//        i2c_master_send(ADDR<<1|1);
+//        char data=i2c_master_recv();
+//        i2c_master_ack(1);
+//        i2c_master_stop();
+        
+//        
+//        i2c_master_start();
+//        i2c_master_send(ADDR<<1|0);       // send device address (write)
+//        i2c_master_send(0x09);          // send register address (GPIO)
+//        i2c_master_send(0b00000001);    // GP0 high
+//        i2c_master_stop();              // STOP
+        
+        
+        unsigned char data=0;
+        
         i2c_master_start();             // start i2c
-        i2c_master_send(0b01001110);    // send device address (constant)
-        i2c_master_send(0x05);          // send register IODIR
-        //i2c_master_send(0x00);          // send data (all outputs)
+        i2c_master_send(0b1101011<<1|0);       // send device address (write)
+        i2c_master_send(0x0F);          // send register address (IODIR)
+//        i2c_master_stop();
         
         i2c_master_restart();
-        i2c_master_send(0b01001111);    // send device address (constant)
-        unsigned int data = i2c_master_recv();
+        i2c_master_send(0b1101011<<1|1);
+        data = i2c_master_recv();
         i2c_master_ack(1);
-        
-        i2c_master_stop();              // STOP
-        
+        i2c_master_stop();
+
+        data=0b00100101;
         CS=0;
         setVoltage(0,data);
         CS=1;
-        
+        // Delay for 1 ms
+        delay(24000);
         
         /*
         i2c_master_start();             // start i2c

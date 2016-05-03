@@ -18,7 +18,7 @@
 #pragma config IESO = OFF               // Internal/External Switch Over (Disabled)
 #pragma config POSCMOD = HS             // Primary Oscillator Configuration (HS osc mode)
 #pragma config OSCIOFNC = OFF           // CLKO Output Signal Active on the OSCO Pin (Disabled)
-#pragma config FPBDIV = DIV_8           // Peripheral Clock Divisor (Pb_Clk is Sys_Clk/1)
+#pragma config FPBDIV = DIV_1           // Peripheral Clock Divisor (Pb_Clk is Sys_Clk/1)
 #pragma config FCKSM = CSDCMD           // Clock Switching and Monitor Selection (Clock Switch Disable, FSCM Disabled)
 #pragma config WDTPS = PS1048576        // Watchdog Timer Postscaler (1:1048576)
 #pragma config WINDIS = OFF             // Watchdog Timer Window Enable (Watchdog Timer is in Non-Window Mode)
@@ -117,38 +117,83 @@ void main(){
         
         
         
-//        //************* I2C WRITE **************
-//        i2c_master_start();             // start i2c
-//        i2c_master_send(ADDR<<1|0);       // send device address (write)
-//        i2c_master_send(0x00);          // send register address (IODIR)
-//        i2c_master_send(0b00000000);          // send data (all outputs)
-//        i2c_master_stop();
-//                
-//        i2c_master_start();
-//        i2c_master_send(ADDR<<1|0);       // send device address (write)
-//        i2c_master_send(0x09);          // send register address (GPIO)
-//        i2c_master_send(0b00000001);    // GP0 high
-//        i2c_master_stop();              // STOP
-//        //************ SHOULD SET GP0 HIGH ************
-        
-        
-        //************ I2C READ *****************
+        //****************** I2C HOMEWORK *******************
         unsigned char data=0;
+        //set GP7 as input and GP0 as output
         i2c_master_start();             // start i2c
-        i2c_master_send(ADDR<<1|0);       // send device address (write)
-        i2c_master_send(0x00);          // send register address (IOCON)
-        i2c_master_send(0b00100101);          // send data (all outputs)
+        i2c_master_send(ADDR<<1|0);     // send device address (write)
+        i2c_master_send(0x00);          // send register address (IODIR)
+        i2c_master_send(0b10000000);    // send data (set input/output)
         i2c_master_stop();
-        
+
+        //read from GP7
         i2c_master_start();
-        i2c_master_send(ADDR<<1|0);       // send device address (write)
-        i2c_master_send(0x00);          // send register address (IOCON)
+        i2c_master_send(ADDR<<1|0);     // send device address (write)
+        i2c_master_send(0x09);          // send register address (GPIO)
         i2c_master_restart();
         i2c_master_send(ADDR<<1|1);
         data=i2c_master_recv();
         i2c_master_ack(1);
         i2c_master_stop();
-        //************ SHOULD SEE 00100101 ************
+        
+        //if GP7 is high, set GP0 high
+        if (data>>7){
+            i2c_master_start();
+            i2c_master_send(ADDR<<1|0);     // send device address (write)
+            i2c_master_send(0x0A);          // send register address (OLAT)
+            i2c_master_send(0b00000001);    // GP0 high
+            i2c_master_stop();              // STOP
+        }
+        else {
+            i2c_master_start();
+            i2c_master_send(ADDR<<1|0);     // send device address (write)
+            i2c_master_send(0x0A);          // send register address (OLAT)
+            i2c_master_send(0b00000000);    // GP0 high
+            i2c_master_stop();              // STOP
+        }
+
+        //*************** END OF I2C HOMEWORK ***************
+        
+        
+        
+        
+        
+        
+        
+//        //************* TEST I2C WRITE **************
+//        i2c_master_start();             // start i2c
+//        i2c_master_send(ADDR<<1|0);     // send device address (write)
+//        i2c_master_send(0x00);          // send register address (IODIR)
+//        i2c_master_send(0b00000000);    // send data (all outputs)
+//        i2c_master_stop();
+//                
+//        i2c_master_start();
+//        i2c_master_send(ADDR<<1|0);     // send device address (write)
+//        i2c_master_send(0x0A);          // send register address (OLAT)
+//        i2c_master_send(0b00000001);    // GP0 high
+//        i2c_master_stop();              // STOP
+//        
+//        LATAINV = 0x0010;    // invert pin 4
+//        //************ SHOULD SET GP0 HIGH ************
+        
+        
+//        //************ TEST I2C READ *****************
+//        unsigned char data=0;
+//        i2c_master_start();             // start i2c
+//        i2c_master_send(ADDR<<1|0);       // send device address (write)
+//        i2c_master_send(0x00);          // send register address (IOCON)
+//        i2c_master_send(0b00100101);          // send data (all outputs)
+//        i2c_master_stop();
+//        
+//        i2c_master_start();
+//        i2c_master_send(ADDR<<1|0);       // send device address (write)
+//        i2c_master_send(0x00);          // send register address (IOCON)
+//        i2c_master_restart();
+//        i2c_master_send(ADDR<<1|1);
+//        data=i2c_master_recv();
+//        i2c_master_ack(1);
+//        i2c_master_stop();
+//        //************ SHOULD SEE 00100101 ************
         
         
 //        
@@ -169,12 +214,12 @@ void main(){
         
         
         
-        //************* READ OUTPUT FROM SPI ******************
-        //data=0b00100101;
-        CS=0;
-        setVoltage(0,data);
-        CS=1;
-        //************************************************
+//        //************* READ OUTPUT FROM SPI ******************
+//        //data=0b00100101;
+//        CS=0;
+//        setVoltage(0,data);
+//        CS=1;
+//        //************************************************
         
         
         

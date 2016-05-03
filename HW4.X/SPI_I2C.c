@@ -111,60 +111,75 @@ void main(){
 //        
 //        // Delay for 1 ms
 //        delay(24000);
-//        
+//        //********************* END OF SPI *******************
         
         
-        //************* I2C **************
+        
+        
+        
+//        //************* I2C WRITE **************
 //        i2c_master_start();             // start i2c
 //        i2c_master_send(ADDR<<1|0);       // send device address (write)
 //        i2c_master_send(0x00);          // send register address (IODIR)
-//        i2c_master_send(0b00100101);          // send data (all outputs)
+//        i2c_master_send(0b00000000);          // send data (all outputs)
 //        i2c_master_stop();
-//        
-//        i2c_master_start();             // start i2c
-//        i2c_master_send(ADDR<<1|0);       // send device address (write)
-//        i2c_master_send(0x05);          // send register address (IODIR)
-//        i2c_master_restart();
-//        i2c_master_send(ADDR<<1|1);
-//        char data=i2c_master_recv();
-//        i2c_master_ack(1);
-//        i2c_master_stop();
-        
-//        
+//                
 //        i2c_master_start();
 //        i2c_master_send(ADDR<<1|0);       // send device address (write)
 //        i2c_master_send(0x09);          // send register address (GPIO)
 //        i2c_master_send(0b00000001);    // GP0 high
 //        i2c_master_stop();              // STOP
+//        //************ SHOULD SET GP0 HIGH ************
         
         
+        //************ I2C READ *****************
         unsigned char data=0;
-        
         i2c_master_start();             // start i2c
-        i2c_master_send(0b1101011<<1|0);       // send device address (write)
-        i2c_master_send(0x0F);          // send register address (IODIR)
-//        i2c_master_stop();
+        i2c_master_send(ADDR<<1|0);       // send device address (write)
+        i2c_master_send(0x00);          // send register address (IOCON)
+        i2c_master_send(0b00100101);          // send data (all outputs)
+        i2c_master_stop();
         
+        i2c_master_start();
+        i2c_master_send(ADDR<<1|0);       // send device address (write)
+        i2c_master_send(0x00);          // send register address (IOCON)
         i2c_master_restart();
-        i2c_master_send(0b1101011<<1|1);
-        data = i2c_master_recv();
+        i2c_master_send(ADDR<<1|1);
+        data=i2c_master_recv();
         i2c_master_ack(1);
         i2c_master_stop();
+        //************ SHOULD SEE 00100101 ************
+        
+        
+//        
+        
+//        //************ TEST IF IMU WORKS ***********************
+//        i2c_master_start();             // start i2c
+//        i2c_master_send(0b1101011<<1|0);       // send device address (write)
+//        i2c_master_send(0x0F);          // send register address (IODIR)
+//        //i2c_master_stop();
+//        
+//        i2c_master_restart();
+//        i2c_master_send(0b1101011<<1|1);
+//        data = i2c_master_recv();
+//        i2c_master_ack(1);
+//        i2c_master_stop();
+//        //************* SHOULD GET 01101001 *******************
 
-        data=0b00100101;
+        
+        
+        
+        //************* READ OUTPUT FROM SPI ******************
+        //data=0b00100101;
         CS=0;
         setVoltage(0,data);
         CS=1;
-        // Delay for 1 ms
-        delay(24000);
+        //************************************************
         
-        /*
-        i2c_master_start();             // start i2c
-        i2c_master_send(0b01000000);    // send device address (constant)
-        i2c_master_send(0x09);          // send register GPIO
-        i2c_master_send(0b01001010);    // send data (pins 1, 2, and 6 high)
-        i2c_master_stop();              // STOP
-        */
+        
+        
+        
+        delay(24000); // Delay 1ms
     }
     
 }

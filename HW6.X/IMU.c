@@ -62,7 +62,7 @@ void main(){
     
     // do your TRIS and LAT commands here
     TRISA = 0xFFEF; // set pin 4 as output
-    TRISB = 0b000111111110011; // set inputs/outputs
+    TRISB = 0b0001111001110011;     // set outputs/inputs
     
     // turn off analog pins
     ANSELBbits.ANSB2 = 0;
@@ -77,6 +77,24 @@ void main(){
     i2c_write(ADDR, 0x10, 0b10000000);
     i2c_write(ADDR, 0x11, 0b10000000);
     i2c_write(ADDR, 0x12, 0b00000100);
+    
+    // initialize PWM
+    RPB7Rbits.RPB7R = 0b0101; //OC1 on pin 16
+    RPB8Rbits.RPB8R = 0b0101; //OC2 on pin 17
+    T2CONbits.TCKPS = 4;    // Timer2 prescaler N=16 (1:16)
+    PR2 = 4999;             // period = (PR2+1) * N * 12.5 ns = 1 ms, 1 kHz
+    TMR2 = 0;               // initial TMR2 count is 0
+    OC1RS = 2500;           // duty cycle = OC1RS/(PR2+1) = 50%
+    OC1R = 2500;            // initialize before turning OC1 on; afterward it is read-only
+    OC2RS = 2500;
+    OC2R = 2500;
+    OC1CONbits.OCTSEL = 0;  // select timer2
+    OC2CONbits.OCTSEL = 0;
+    OC1CONbits.OCM = 0b110; // PWM mode without fault pin; other OC1CON bits are defaults
+    OC2CONbits.OCM = 0b110;
+    T2CONbits.ON = 1;       // turn on Timer2
+    OC1CONbits.ON = 1;      // turn on OC1
+    OC2CONbits.ON = 1;
     
     RPB13Rbits.RPB13R = 0b0011; //SDO
     CS = 1;
@@ -154,6 +172,37 @@ void main(){
         accelz = az + 32768;
         
         //********************************************************
+        
+        
+        
+        //*********************** PWM ****************************
+        // Calculate OC1RS and OC2RS
+        OC1RS = floor(accelx/6.5535);
+        OC2RS = floor(accely/6.5535);
+        
+        // Set OC1 limits
+        if (OC1RS > 7500){
+            OC1RS = 5000;
+        }
+        else if (OC1RS < 2500){
+            OC1RS = 0;
+        }
+        else {
+            OC1RS = OC1RS-2500;
+        }
+        
+        // Set OC2 limits
+        if (OC2RS > 7500){
+            OC2RS = 5000;
+        }
+        else if (OC2RS < 2500){
+            OC2RS = 0;
+        }
+        else {
+            OC2RS = OC2RS-2500;
+        }
+        
+        //******************************************************
         
         
 

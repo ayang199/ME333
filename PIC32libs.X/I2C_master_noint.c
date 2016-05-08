@@ -48,3 +48,84 @@ void i2c_master_stop(void) {          // send a STOP:
   I2C2CONbits.PEN = 1;                // comm is complete and master relinquishes bus
   while(I2C2CONbits.PEN) { ; }        // wait for STOP to complete
 }
+
+void i2c_write(unsigned char ADDR, unsigned char REG, unsigned char data){
+    i2c_master_start();             // start i2c
+    i2c_master_send(ADDR<<1|0);     // send device address (write)
+    i2c_master_send(REG);           // send register address
+    i2c_master_send(data);          // send data
+    i2c_master_stop();
+}
+
+unsigned char i2c_read(char ADDR, char REG){
+    unsigned char data = 0;
+    i2c_master_start();             // start i2c
+    i2c_master_send(ADDR<<1|0);     // send device address (write)
+    i2c_master_send(REG);           // send register address
+    
+    i2c_master_restart();
+    i2c_master_send(ADDR<<1|1);
+    data = i2c_master_recv();
+    i2c_master_ack(1);
+    i2c_master_stop();
+    return data;
+}
+
+//void i2c_multiread(char ADDR, char REG, unsigned char *data, char length){
+//    i2c_master_start();             // start i2c
+//    i2c_master_send(ADDR<<1|0);     // send device address (write)
+//    i2c_master_send(REG);           // send register address
+//    
+//    i2c_master_restart();
+//    i2c_master_send(ADDR<<1|1);
+//    
+//    int ii=1;
+//    
+//    for (ii; ii <= length; ii=ii+1){
+//        if (ii < length){
+//            data[ii-1] = i2c_master_recv();
+//            i2c_master_ack(0);
+//        }
+//        else if (ii == length){
+//            data[ii-1] = i2c_master_recv();
+//            i2c_master_ack(1);
+//            i2c_master_stop();
+//        }
+//    }
+//}
+
+void i2c_multiread(unsigned char ADDR, unsigned char REG, unsigned char *data, char length){
+    i2c_master_start();             // start i2c
+    i2c_master_send(ADDR<<1|0);     // send device address (write)
+    i2c_master_send(REG);           // send register address
+    
+    i2c_master_restart();
+    i2c_master_send(ADDR<<1|1);
+    
+    int ii=1;
+    
+    while (ii < length){
+        data[ii-1] = i2c_master_recv();
+        i2c_master_ack(0);
+        ii++;
+    }
+    
+    data[length-1] = i2c_master_recv();
+    i2c_master_ack(1);
+    i2c_master_stop();
+    
+//        i2c_master_start();             // start i2c
+//        i2c_master_send(ADDR<<1|0);     // send device address (write)
+//        i2c_master_send(REG);           // send register address
+//        
+//        i2c_master_restart();
+//        i2c_master_send(ADDR<<1|1);
+//        data[0] = i2c_master_recv();
+//        i2c_master_ack(0);
+//        data[1] = i2c_master_recv();
+//        i2c_master_ack(0);
+//        data[2] = i2c_master_recv();
+//        i2c_master_ack(1);
+//        i2c_master_stop();
+    
+}

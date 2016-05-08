@@ -219,36 +219,36 @@ void main(){
         LCD_print(xloc,yloc,text,WHITE,RED);
         yloc = 10;
         
-//        //********************************************************
-//        
-//        
-//        
-//        //*********************** PWM ****************************
-//        // Calculate OC1RS and OC2RS
-//        OC1RS = floor(accelx/6.5535);
-//        OC2RS = floor(accely/6.5535);
-//        
-//        // Set OC1 limits
-//        if (OC1RS > 7500){
-//            OC1RS = 5000;
-//        }
-//        else if (OC1RS < 2500){
-//            OC1RS = 0;
-//        }
-//        else {
-//            OC1RS = OC1RS-2500;
-//        }
-//        
-//        // Set OC2 limits
-//        if (OC2RS > 7500){
-//            OC2RS = 5000;
-//        }
-//        else if (OC2RS < 2500){
-//            OC2RS = 0;
-//        }
-//        else {
-//            OC2RS = OC2RS-2500;
-//        }
+        //********************************************************
+        
+        
+        
+        //*********************** PWM ****************************
+        // Calculate OC1RS and OC2RS
+        OC1RS = floor(accelx/6.5535);
+        OC2RS = floor(accely/6.5535);
+        
+        // Set OC1 limits
+        if (OC1RS > 7500){
+            OC1RS = 5000;
+        }
+        else if (OC1RS < 2500){
+            OC1RS = 0;
+        }
+        else {
+            OC1RS = OC1RS-2500;
+        }
+        
+        // Set OC2 limits
+        if (OC2RS > 7500){
+            OC2RS = 5000;
+        }
+        else if (OC2RS < 2500){
+            OC2RS = 0;
+        }
+        else {
+            OC2RS = OC2RS-2500;
+        }
         
         //******************************************************
         

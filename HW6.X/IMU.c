@@ -142,14 +142,21 @@ void main(){
     
     char text[100];
     
+    unsigned char xloc=10;
+    unsigned char yloc=10;
+    
     //**********************************************************
     
     
     
     while(1){        
-        int var = 1337;
-        sprintf(text,"Hello World %d!",var);
-        LCD_print(28,32,text,WHITE);
+        //************** TEST IF LCD WORKS *******************
+//        int var = 1337;
+//        sprintf(text,"Hello World %d!",var);
+//        LCD_print(28,32,text,WHITE);
+        //****************************************************
+        
+        
         
         
         //************ TEST IF IMU WORKS ***********************
@@ -164,30 +171,54 @@ void main(){
         //************* SHOULD GET 01101001 *******************
 
         
+        
+        
         //********** READ MULTI REGISTERS FROM IMU ***************
-//        i2c_multiread(ADDR,0x20,IMUdata,length);
-//        
-//        temp = (IMUdata[1]<<8) | IMUdata[0];
-//        temperature = temp + 32768;
-//        
-//        gx = (IMUdata[3]<<8) | IMUdata[2];
-//        gyrox = gx + 32768;
-//        
-//        gy = (IMUdata[5]<<8) | IMUdata[4];
-//        gyroy = gy + 32768;
-//        
-//        gz = (IMUdata[7]<<8) | IMUdata[6];
-//        gyroz = gz + 32768;
-//        
-//        ax = (IMUdata[9]<<8) | IMUdata[8];
-//        accelx = ax + 32768;
-//        
-//        ay = (IMUdata[11]<<8) | IMUdata[10];
-//        accely = ay + 32768;
-//        
-//        az = (IMUdata[13]<<8) | IMUdata[12];
-//        accelz = az + 32768;
-//        
+        i2c_multiread(ADDR,0x20,IMUdata,length);
+       
+        
+        temp = (IMUdata[1]<<8) | IMUdata[0];
+        temperature = temp + 32768;
+        sprintf(text,"Temp: %d ",temperature);
+        LCD_print(xloc,yloc,text,WHITE,RED);
+        yloc = yloc+12;
+        
+        gx = (IMUdata[3]<<8) | IMUdata[2];
+        gyrox = gx + 32768;
+        sprintf(text,"Gx: %d ",gyrox);
+        LCD_print(xloc,yloc,text,WHITE,RED);
+        yloc = yloc+12;
+        
+        gy = (IMUdata[5]<<8) | IMUdata[4];
+        gyroy = gy + 32768;
+        sprintf(text,"Gy: %d ",gyroy);
+        LCD_print(xloc,yloc,text,WHITE,RED);
+        yloc = yloc+12;
+        
+        gz = (IMUdata[7]<<8) | IMUdata[6];
+        gyroz = gz + 32768;
+        sprintf(text,"Gz: %d ",gyroz);
+        LCD_print(xloc,yloc,text,WHITE,RED);
+        yloc = yloc+12;
+        
+        ax = (IMUdata[9]<<8) | IMUdata[8];
+        accelx = ax + 32768;
+        sprintf(text,"Ax: %d ",accelx);
+        LCD_print(xloc,yloc,text,WHITE,RED);
+        yloc = yloc+12;
+        
+        ay = (IMUdata[11]<<8) | IMUdata[10];
+        accely = ay + 32768;
+        sprintf(text,"Ay: %d ",accely);
+        LCD_print(xloc,yloc,text,WHITE,RED);
+        yloc = yloc+12;
+        
+        az = (IMUdata[13]<<8) | IMUdata[12];
+        accelz = az + 32768;
+        sprintf(text,"Az: %d ",accelz);
+        LCD_print(xloc,yloc,text,WHITE,RED);
+        yloc = 10;
+        
 //        //********************************************************
 //        
 //        

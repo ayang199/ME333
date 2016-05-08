@@ -190,7 +190,7 @@ void LCD_clearScreen(unsigned short color) {
 		}
 }
 
-void LCD_char(unsigned char x, unsigned char y, unsigned char letter, unsigned short color){
+void LCD_char(unsigned char x, unsigned char y, unsigned char letter, unsigned short color, unsigned short bgcolor){
     int i=0;
     int j=0;
     while(i<5){
@@ -200,7 +200,7 @@ void LCD_char(unsigned char x, unsigned char y, unsigned char letter, unsigned s
                 LCD_drawPixel(x+i,y+j,color);
             }
             else {
-                ;
+                LCD_drawPixel(x+i,y+j,bgcolor);
             }
             j++;
         }
@@ -209,7 +209,7 @@ void LCD_char(unsigned char x, unsigned char y, unsigned char letter, unsigned s
     }
 }
 
-void LCD_print(unsigned char x, unsigned char y, char *text, unsigned short color){
+void LCD_print(unsigned char x, unsigned char y, char *text, unsigned short color, unsigned short bgcolor){
     int ii=0;
     unsigned char x0=x;
     unsigned char y0=y;
@@ -221,10 +221,12 @@ void LCD_print(unsigned char x, unsigned char y, char *text, unsigned short colo
             else {
                 y=y+8;
                 x=x0;
+                LCD_char(x,y,text[ii],color,bgcolor);
+                x=x+5;
             }
         }
         else {
-            LCD_char(x,y,text[ii],color);
+            LCD_char(x,y,text[ii],color,bgcolor);
             x=x+5;
         }
         ii++;

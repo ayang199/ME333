@@ -178,7 +178,7 @@ void LCD_drawPixel(unsigned short, unsigned short, unsigned short); // set the x
 void LCD_setAddr(unsigned short, unsigned short, unsigned short, unsigned short); // set the memory address you are writing to
 void LCD_clearScreen(unsigned short); // set the color of every pixel
 
-void LCD_char(unsigned char x, unsigned char y, unsigned char letter, unsigned short color);
-void LCD_print(unsigned char x, unsigned char y, char *text, unsigned short color);
+void LCD_char(unsigned char x, unsigned char y, unsigned char letter, unsigned short color, unsigned short bgcolor);
+void LCD_print(unsigned char x, unsigned char y, char *text, unsigned short color, unsigned short bgcolor);
 
 #endif

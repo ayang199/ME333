@@ -32,7 +32,10 @@ import android.view.WindowManager;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.ScrollView;
+import android.widget.SeekBar;
+import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
+
 
 import com.hoho.android.usbserial.driver.UsbSerialPort;
 import com.hoho.android.usbserial.examples.R;
@@ -43,6 +46,7 @@ import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+
 /**
  * Monitors a single {@link UsbSerialPort} instance, showing all data
  * received.
@@ -50,6 +54,9 @@ import java.util.concurrent.Executors;
  * @author mike wakerly (opensource@hoho.com)
  */
 public class SerialConsoleActivity extends Activity {
+
+    SeekBar myControl;
+    TextView myTextView;
 
     private final String TAG = SerialConsoleActivity.class.getSimpleName();
 
@@ -104,6 +111,12 @@ public class SerialConsoleActivity extends Activity {
         mScrollView = (ScrollView) findViewById(R.id.demoScroller);
         chkDTR = (CheckBox) findViewById(R.id.checkBoxDTR);
         chkRTS = (CheckBox) findViewById(R.id.checkBoxRTS);
+
+        myControl = (SeekBar) findViewById(R.id.seekBar);
+
+        myTextView = (TextView) findViewById(R.id.textView01);
+        myTextView.setText("Move slider to change LED brightness");
+        setMyControlListener();
 
         chkDTR.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -173,12 +186,7 @@ public class SerialConsoleActivity extends Activity {
                 showStatus(mDumpTextView, "RI  - Ring Indicator", sPort.getRI());
                 showStatus(mDumpTextView, "RTS - Request To Send", sPort.getRTS());
 
-                int i = 100;
-                String sendString = String.valueOf(i) + "\n";
-                try {
-                    sPort.write(sendString.getBytes(),10); // 10 is the timeout
-                }
-                catch (IOException e) {}
+
 
             } catch (IOException e) {
                 Log.e(TAG, "Error setting up device: " + e.getMessage(), e);
@@ -235,6 +243,34 @@ public class SerialConsoleActivity extends Activity {
         final Intent intent = new Intent(context, SerialConsoleActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_NO_HISTORY);
         context.startActivity(intent);
+    }
+
+    private void setMyControlListener() {
+        myControl.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
+
+            int progressChanged = 0;
+
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                progressChanged = progress;
+                //myTextView.setText("The value is: "+progress);
+
+                String sendString = String.valueOf(progress) + "\n";
+                try {
+                    sPort.write(sendString.getBytes(),10); // 10 is the timeout
+                }
+                catch (IOException e) {}
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
     }
 
 }

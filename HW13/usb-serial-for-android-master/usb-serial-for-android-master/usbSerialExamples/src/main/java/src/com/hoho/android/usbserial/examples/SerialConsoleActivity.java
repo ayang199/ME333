@@ -186,7 +186,12 @@ public class SerialConsoleActivity extends Activity {
                 showStatus(mDumpTextView, "RI  - Ring Indicator", sPort.getRI());
                 showStatus(mDumpTextView, "RTS - Request To Send", sPort.getRTS());
 
-
+                int i = 100;
+                String sendString = String.valueOf(i) + "\n";
+                try {
+                    sPort.write(sendString.getBytes(),10); // 10 is the timeout
+                }
+                catch (IOException e) {}
 
             } catch (IOException e) {
                 Log.e(TAG, "Error setting up device: " + e.getMessage(), e);
@@ -253,7 +258,7 @@ public class SerialConsoleActivity extends Activity {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 progressChanged = progress;
-                //myTextView.setText("The value is: "+progress);
+                myTextView.setText("The value is: "+progress);
 
                 String sendString = String.valueOf(progress) + "\n";
                 try {

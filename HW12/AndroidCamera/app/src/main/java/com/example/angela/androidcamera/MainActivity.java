@@ -117,17 +117,108 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
 
             // draw a circle where you think the COM is
             canvas.drawCircle(COM, startY, 5, paint1);
+            //***** End of dot 1*****
 
-            // also write the value as text
+            //***** Start of dot 2 *****
+            int[] pixels2 = new int[bmp.getWidth()];
+            int startY2 = 200; // which row in the bitmap to analyse to read
+            // only look at one row in the image
+            bmp.getPixels(pixels2, 0, bmp.getWidth(), 0, startY2, bmp.getWidth(), 1); // (array name, offset inside array, stride (size of row), start x, start y, num pixels to read per row, num rows to read)
+
+            // pixels[] is the RGBA data (in black an white).
+            // instead of doing center of mass on it, decide if each pixel is dark enough to consider black or white
+            // then do a center of mass on the thresholded array
+            int[] thresholdedPixels2 = new int[bmp.getWidth()];
+            int wbTotal2 = 0; // total mass
+            int wbCOM2 = 0; // total (mass time position)
+            for (int i = 0; i < bmp.getWidth(); i++) {
+                // sum the red, green and blue, subtract from 255 to get the darkness of the pixel.
+                // if it is greater than some value (600 here), consider it black
+                // play with the 600 value if you are having issues reliably seeing the line
+                if (255*3-(red(pixels2[i])+green(pixels2[i])+blue(pixels2[i])) > 600) {
+                    thresholdedPixels2[i] = 255*3;
+                }
+                else {
+                    thresholdedPixels2[i] = 0;
+                }
+                wbTotal2 = wbTotal2 + thresholdedPixels2[i];
+                wbCOM2 = wbCOM2 + thresholdedPixels2[i]*i;
+            }
+            int COM2;
+            //watch out for divide by 0
+            if (wbTotal2<=0) {
+                COM2 = bmp.getWidth()/2;
+            }
+            else {
+                COM2 = wbCOM2/wbTotal2;
+            }
+
+            // draw a circle where you think the COM is
+            canvas.drawCircle(COM2, startY2, 5, paint1);
+            //************ End of dot 2 *****
+
+
+            //************** Start of dot 3 *********
+            int[] pixels3 = new int[bmp.getWidth()];
+            int startY3 = 400; // which row in the bitmap to analyse to read
+            // only look at one row in the image
+            bmp.getPixels(pixels3, 0, bmp.getWidth(), 0, startY3, bmp.getWidth(), 1); // (array name, offset inside array, stride (size of row), start x, start y, num pixels to read per row, num rows to read)
+
+            // pixels[] is the RGBA data (in black an white).
+            // instead of doing center of mass on it, decide if each pixel is dark enough to consider black or white
+            // then do a center of mass on the thresholded array
+            int[] thresholdedPixels3 = new int[bmp.getWidth()];
+            int wbTotal3 = 0; // total mass
+            int wbCOM3 = 0; // total (mass time position)
+            for (int i = 0; i < bmp.getWidth(); i++) {
+                // sum the red, green and blue, subtract from 255 to get the darkness of the pixel.
+                // if it is greater than some value (600 here), consider it black
+                // play with the 600 value if you are having issues reliably seeing the line
+                if (255*3-(red(pixels3[i])+green(pixels3[i])+blue(pixels3[i])) > 600) {
+                    thresholdedPixels3[i] = 255*3;
+                }
+                else {
+                    thresholdedPixels3[i] = 0;
+                }
+                wbTotal3 = wbTotal3 + thresholdedPixels3[i];
+                wbCOM3 = wbCOM3 + thresholdedPixels3[i]*i;
+            }
+            int COM3;
+            //watch out for divide by 0
+            if (wbTotal3<=0) {
+                COM3 = bmp.getWidth()/2;
+            }
+            else {
+                COM3 = wbCOM3/wbTotal3;
+            }
+
+            // draw a circle where you think the COM is
+            canvas.drawCircle(COM3, startY3, 5, paint1);
+            //****** End of dot 3 ******
+
+            // also write the value as text (top dot)
             canvas.drawText("COM = " + COM, 10, 200, paint1);
             c.drawBitmap(bmp, 0, 0, null);
             mSurfaceHolder.unlockCanvasAndPost(c);
+
+
+
+            // if COM < COM2 (curve angles to the left)
+            // angle = COM2-COM
+            // run right motor faster depending on angle
+
+            // if COM > COM2 (curve angles to right)
+            // angle = COM-COM2
+            // run left motor faster depending on angle
+            
+
 
             // calculate the FPS to see how fast the code is running
             long nowtime = System.currentTimeMillis();
             long diff = nowtime - prevtime;
             mTextView.setText("FPS " + 1000/diff);
             prevtime = nowtime;
+
         }
     }
 }

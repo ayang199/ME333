@@ -210,7 +210,7 @@ public class MainActivity extends Activity implements TextureView.SurfaceTexture
             // if COM > COM2 (curve angles to right)
             // angle = COM-COM2
             // run left motor faster depending on angle
-            
+
 
 
             // calculate the FPS to see how fast the code is running

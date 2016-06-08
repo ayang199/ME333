@@ -32,16 +32,23 @@ import android.view.WindowManager;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.ScrollView;
+import android.widget.SeekBar;
+import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
 
+import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
+import android.os.Bundle;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.TextureView;
+import android.view.WindowManager;
+import android.widget.TextView;
+import java.io.IOException;
 import static android.graphics.Color.blue;
 import static android.graphics.Color.green;
 import static android.graphics.Color.red;
@@ -69,12 +76,17 @@ public class SerialConsoleActivity extends Activity implements TextureView.Surfa
     private TextureView mTextureView;
     private SurfaceView mSurfaceView;
     private SurfaceHolder mSurfaceHolder;
-    private Bitmap bmp = Bitmap.createBitmap(640,480,Bitmap.Config.ARGB_8888);
+    private Bitmap bmp = Bitmap.createBitmap(320,240,Bitmap.Config.ARGB_8888);
     private Canvas canvas = new Canvas(bmp);
     private Paint paint1 = new Paint();
     private TextView mTextView;
 
     static long prevtime = 0; // for FPS calculation
+
+    SeekBar myControl;
+    TextView myTextView;
+
+    int progressChanged;
 
     private final String TAG = SerialConsoleActivity.class.getSimpleName();
 
@@ -124,6 +136,17 @@ public class SerialConsoleActivity extends Activity implements TextureView.Surfa
         super.onCreate(savedInstanceState);
         setContentView(R.layout.serial_console);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        mTitleTextView = (TextView) findViewById(R.id.demoTitle);
+        mDumpTextView = (TextView) findViewById(R.id.consoleText);
+        mScrollView = (ScrollView) findViewById(R.id.demoScroller);
+        chkDTR = (CheckBox) findViewById(R.id.checkBoxDTR);
+        chkRTS = (CheckBox) findViewById(R.id.checkBoxRTS);
+
+        myControl = (SeekBar) findViewById(R.id.seekBar);
+
+        myTextView = (TextView) findViewById(R.id.textView01);
+        myTextView.setText("Move slider to change red/green threshold");
+        setMyControlListener();
 
         mSurfaceView = (SurfaceView) findViewById(R.id.surfaceview);
         mSurfaceHolder = mSurfaceView.getHolder();
@@ -136,13 +159,102 @@ public class SerialConsoleActivity extends Activity implements TextureView.Surfa
         paint1.setColor(0xffff0000); // red
         paint1.setTextSize(24);
 
+        chkDTR.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                try {
+                    sPort.setDTR(isChecked);
+                }catch (IOException x){}
+            }
+        });
+
+        chkRTS.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                try {
+                    sPort.setRTS(isChecked);
+                }catch (IOException x){}
+            }
+        });
+
+    }
+
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        stopIoManager();
+        if (sPort != null) {
+            try {
+                sPort.close();
+            } catch (IOException e) {
+                // Ignore.
+            }
+            sPort = null;
+        }
+        finish();
+    }
+
+    void showStatus(TextView theTextView, String theLabel, boolean theValue){
+        String msg = theLabel + ": " + (theValue ? "enabled" : "disabled") + "\n";
+        theTextView.append(msg);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Log.d(TAG, "Resumed, port=" + sPort);
+        if (sPort == null) {
+            mTitleTextView.setText("No serial device.");
+        } else {
+            final UsbManager usbManager = (UsbManager) getSystemService(Context.USB_SERVICE);
+
+            UsbDeviceConnection connection = usbManager.openDevice(sPort.getDriver().getDevice());
+            if (connection == null) {
+                mTitleTextView.setText("Opening device failed");
+                return;
+            }
+
+            try {
+                sPort.open(connection);
+                sPort.setParameters(115200, 8, UsbSerialPort.STOPBITS_1, UsbSerialPort.PARITY_NONE);
+
+//                showStatus(mDumpTextView, "CD  - Carrier Detect", sPort.getCD());
+//                showStatus(mDumpTextView, "CTS - Clear To Send", sPort.getCTS());
+//                showStatus(mDumpTextView, "DSR - Data Set Ready", sPort.getDSR());
+//                showStatus(mDumpTextView, "DTR - Data Terminal Ready", sPort.getDTR());
+//                showStatus(mDumpTextView, "DSR - Data Set Ready", sPort.getDSR());
+//                showStatus(mDumpTextView, "RI  - Ring Indicator", sPort.getRI());
+//                showStatus(mDumpTextView, "RTS - Request To Send", sPort.getRTS());
+
+                int i = 50;
+                String sendString = String.valueOf(i) + "\n";
+                try {
+                    sPort.write(sendString.getBytes(),10); // 10 is the timeout
+                }
+                catch (IOException e) {}
+
+            } catch (IOException e) {
+                Log.e(TAG, "Error setting up device: " + e.getMessage(), e);
+                mTitleTextView.setText("Error opening device: " + e.getMessage());
+                try {
+                    sPort.close();
+                } catch (IOException e2) {
+                    // Ignore.
+                }
+                sPort = null;
+                return;
+            }
+            mTitleTextView.setText("Serial device: " + sPort.getClass().getSimpleName());
+        }
+        onDeviceStateChange();
     }
 
     public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
         mCamera = Camera.open();
         Camera.Parameters parameters = mCamera.getParameters();
-        parameters.setPreviewSize(640, 480);
-        parameters.setColorEffect(Camera.Parameters.EFFECT_MONO); // black and white
+        parameters.setPreviewSize(320, 240);
+//        parameters.setColorEffect(Camera.Parameters.EFFECT_MONO); // black and white
         parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_INFINITY); // no autofocusing
         mCamera.setParameters(parameters);
         mCamera.setDisplayOrientation(90); // rotate to portrait mode
@@ -188,7 +300,7 @@ public class SerialConsoleActivity extends Activity implements TextureView.Surfa
                 // sum the red, green and blue, subtract from 255 to get the darkness of the pixel.
                 // if it is greater than some value (600 here), consider it black
                 // play with the 600 value if you are having issues reliably seeing the line
-                if (255*3-(red(pixels[i])+green(pixels[i])+blue(pixels[i])) > 600) {
+                if ((red(pixels[i])-green(pixels[i])) > progressChanged) {
                     thresholdedPixels[i] = 255*3;
                 }
                 else {
@@ -197,6 +309,7 @@ public class SerialConsoleActivity extends Activity implements TextureView.Surfa
                 wbTotal = wbTotal + thresholdedPixels[i];
                 wbCOM = wbCOM + thresholdedPixels[i]*i;
             }
+
             int COM;
             //watch out for divide by 0
             if (wbTotal<=0) {
@@ -208,100 +321,19 @@ public class SerialConsoleActivity extends Activity implements TextureView.Surfa
 
             // draw a circle where you think the COM is
             canvas.drawCircle(COM, startY, 5, paint1);
-            //***** End of dot 1*****
 
-            //***** Start of dot 2 *****
-            int[] pixels2 = new int[bmp.getWidth()];
-            int startY2 = 200; // which row in the bitmap to analyse to read
-            // only look at one row in the image
-            bmp.getPixels(pixels2, 0, bmp.getWidth(), 0, startY2, bmp.getWidth(), 1); // (array name, offset inside array, stride (size of row), start x, start y, num pixels to read per row, num rows to read)
-
-            // pixels[] is the RGBA data (in black an white).
-            // instead of doing center of mass on it, decide if each pixel is dark enough to consider black or white
-            // then do a center of mass on the thresholded array
-            int[] thresholdedPixels2 = new int[bmp.getWidth()];
-            int wbTotal2 = 0; // total mass
-            int wbCOM2 = 0; // total (mass time position)
-            for (int i = 0; i < bmp.getWidth(); i++) {
-                // sum the red, green and blue, subtract from 255 to get the darkness of the pixel.
-                // if it is greater than some value (600 here), consider it black
-                // play with the 600 value if you are having issues reliably seeing the line
-                if (255*3-(red(pixels2[i])+green(pixels2[i])+blue(pixels2[i])) > 600) {
-                    thresholdedPixels2[i] = 255*3;
-                }
-                else {
-                    thresholdedPixels2[i] = 0;
-                }
-                wbTotal2 = wbTotal2 + thresholdedPixels2[i];
-                wbCOM2 = wbCOM2 + thresholdedPixels2[i]*i;
-            }
-            int COM2;
-            //watch out for divide by 0
-            if (wbTotal2<=0) {
-                COM2 = bmp.getWidth()/2;
-            }
-            else {
-                COM2 = wbCOM2/wbTotal2;
-            }
-
-            // draw a circle where you think the COM is
-            canvas.drawCircle(COM2, startY2, 5, paint1);
-            //************ End of dot 2 *****
-
-
-            //************** Start of dot 3 *********
-            int[] pixels3 = new int[bmp.getWidth()];
-            int startY3 = 400; // which row in the bitmap to analyse to read
-            // only look at one row in the image
-            bmp.getPixels(pixels3, 0, bmp.getWidth(), 0, startY3, bmp.getWidth(), 1); // (array name, offset inside array, stride (size of row), start x, start y, num pixels to read per row, num rows to read)
-
-            // pixels[] is the RGBA data (in black an white).
-            // instead of doing center of mass on it, decide if each pixel is dark enough to consider black or white
-            // then do a center of mass on the thresholded array
-            int[] thresholdedPixels3 = new int[bmp.getWidth()];
-            int wbTotal3 = 0; // total mass
-            int wbCOM3 = 0; // total (mass time position)
-            for (int i = 0; i < bmp.getWidth(); i++) {
-                // sum the red, green and blue, subtract from 255 to get the darkness of the pixel.
-                // if it is greater than some value (600 here), consider it black
-                // play with the 600 value if you are having issues reliably seeing the line
-                if (255*3-(red(pixels3[i])+green(pixels3[i])+blue(pixels3[i])) > 600) {
-                    thresholdedPixels3[i] = 255*3;
-                }
-                else {
-                    thresholdedPixels3[i] = 0;
-                }
-                wbTotal3 = wbTotal3 + thresholdedPixels3[i];
-                wbCOM3 = wbCOM3 + thresholdedPixels3[i]*i;
-            }
-            int COM3;
-            //watch out for divide by 0
-            if (wbTotal3<=0) {
-                COM3 = bmp.getWidth()/2;
-            }
-            else {
-                COM3 = wbCOM3/wbTotal3;
-            }
-
-            // draw a circle where you think the COM is
-            canvas.drawCircle(COM3, startY3, 5, paint1);
-            //****** End of dot 3 ******
-
-            // also write the value as text (top dot)
+            // also write the value as text
             canvas.drawText("COM = " + COM, 10, 200, paint1);
             c.drawBitmap(bmp, 0, 0, null);
             mSurfaceHolder.unlockCanvasAndPost(c);
 
 
 
-            // if COM < COM2 (curve angles to the left)
-            // angle = COM2-COM
-            // run right motor faster depending on angle
-
-            // if COM > COM2 (curve angles to right)
-            // angle = COM-COM2
-            // run left motor faster depending on angle
-
+            String sendString = String.valueOf(COM) + "\n";
+            try {
+                sPort.write(sendString.getBytes(),10); // 10 is the timeout
+            }
+            catch (IOException e) {}
 
 
             // calculate the FPS to see how fast the code is running
@@ -311,79 +343,6 @@ public class SerialConsoleActivity extends Activity implements TextureView.Surfa
             prevtime = nowtime;
 
         }
-    }
-
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        stopIoManager();
-        if (sPort != null) {
-            try {
-                sPort.close();
-            } catch (IOException e) {
-                // Ignore.
-            }
-            sPort = null;
-        }
-        finish();
-    }
-
-    void showStatus(TextView theTextView, String theLabel, boolean theValue){
-        String msg = theLabel + ": " + (theValue ? "enabled" : "disabled") + "\n";
-        theTextView.append(msg);
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        Log.d(TAG, "Resumed, port=" + sPort);
-        if (sPort == null) {
-            mTitleTextView.setText("No serial device.");
-        } else {
-            final UsbManager usbManager = (UsbManager) getSystemService(Context.USB_SERVICE);
-
-            UsbDeviceConnection connection = usbManager.openDevice(sPort.getDriver().getDevice());
-            if (connection == null) {
-                mTitleTextView.setText("Opening device failed");
-                return;
-            }
-
-            try {
-                sPort.open(connection);
-                sPort.setParameters(115200, 8, UsbSerialPort.STOPBITS_1, UsbSerialPort.PARITY_NONE);
-
-                showStatus(mDumpTextView, "CD  - Carrier Detect", sPort.getCD());
-                showStatus(mDumpTextView, "CTS - Clear To Send", sPort.getCTS());
-                showStatus(mDumpTextView, "DSR - Data Set Ready", sPort.getDSR());
-                showStatus(mDumpTextView, "DTR - Data Terminal Ready", sPort.getDTR());
-                showStatus(mDumpTextView, "DSR - Data Set Ready", sPort.getDSR());
-                showStatus(mDumpTextView, "RI  - Ring Indicator", sPort.getRI());
-                showStatus(mDumpTextView, "RTS - Request To Send", sPort.getRTS());
-
-                //
-
-
-                //String sendString = String.valueOf(speed) + "\n";
-                //try {
-                //    sPort.write(sendString.getBytes(),10); // 10 is the timeout
-                //}
-                //catch (IOException e) {}
-
-            } catch (IOException e) {
-                Log.e(TAG, "Error setting up device: " + e.getMessage(), e);
-                mTitleTextView.setText("Error opening device: " + e.getMessage());
-                try {
-                    sPort.close();
-                } catch (IOException e2) {
-                    // Ignore.
-                }
-                sPort = null;
-                return;
-            }
-            mTitleTextView.setText("Serial device: " + sPort.getClass().getSimpleName());
-        }
-        onDeviceStateChange();
     }
 
     private void stopIoManager() {
@@ -408,10 +367,10 @@ public class SerialConsoleActivity extends Activity implements TextureView.Surfa
     }
 
     private void updateReceivedData(byte[] data) {
-        final String message = "Read " + data.length + " bytes: \n"
-                + HexDump.dumpHexString(data) + "\n\n";
-        mDumpTextView.append(message);
-        mScrollView.smoothScrollTo(0, mDumpTextView.getBottom());
+//        final String message = "Read " + data.length + " bytes: \n"
+//                + HexDump.dumpHexString(data) + "\n\n";
+//        mDumpTextView.append(message);
+//        mScrollView.smoothScrollTo(0, mDumpTextView.getBottom());
     }
 
     /**
@@ -425,6 +384,26 @@ public class SerialConsoleActivity extends Activity implements TextureView.Surfa
         final Intent intent = new Intent(context, SerialConsoleActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_NO_HISTORY);
         context.startActivity(intent);
+    }
+
+    private void setMyControlListener() {
+        myControl.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
+
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                progressChanged = progress;
+                myTextView.setText("The threshold is: " + progress*6);
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
     }
 
 }
